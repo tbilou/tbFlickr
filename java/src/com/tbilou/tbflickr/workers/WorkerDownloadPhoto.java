@@ -81,18 +81,13 @@ public class WorkerDownloadPhoto implements Runnable {
                     Files.createLink(newLink, existingFile);
                 } catch (IOException | UnsupportedOperationException x) {
                     System.err.println(x);
-                    //Download the photo
-                    // FIXME: Duplicate code bahh
                     try {
-                        dir.mkdirs();
-                        saveImage(job.url, f.getAbsolutePath());
-                        // Make a reference to it in Redis
-                        jedis.set(job.id, f.getAbsolutePath());
-
-
+                        //Make a simple copy of the file
+                        Files.copy(existingFile, newLink);
                     } catch (IOException ex) {
-                        System.out.println(new Date() + "[WorkerDownloadPhoto] Error/Timeout Downloading/Writting File " + ex);
+                        System.out.println(new Date() + "[WorkerDownloadPhoto] Error Copying File " + ex);
                     }
+                    
                 }
             } else {
                 System.out.println(new Date() + "[WorkerDownloadPhoto] Downloading file : " + job.title + ".jpg");
