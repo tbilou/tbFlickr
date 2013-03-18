@@ -1,0 +1,3 @@
+[submodule "php/KLogger"]
+	path = php/KLogger
+	url = https://github.com/katzgrau/KLogger
