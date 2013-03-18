@@ -10,8 +10,9 @@
  *
  * @author tbilou
  */
-require "inc/tbPhpFlickr/tbPhpFlickr.php";
-require "KLogger.php";
+require_once "tbPhpFlickr/tbPhpFlickr.php";
+require_once "KLogger/src/KLogger.php";
+require_once "Keys.php";
 
 class aWorker {
 
@@ -32,17 +33,14 @@ class aWorker {
         $this->redis->connect($this->REDIS_HOST, $this->REDIS_PORT);
 
         // Get the config
-        $path = $this->redis->hget(Queues::CONFIG_INFO, "DOWNLOAD_PATH");
-        $log_path = $this->redis->hget(Queues::CONFIG_INFO, "LOG_PATH");
+        $path = $this->redis->hget(Keys::CONFIG_INFO, "DOWNLOAD_PATH");
+        $log_path = $this->redis->hget(Keys::CONFIG_INFO, "LOG_PATH");
 
-        echo "Checking Path variable";
         if ($path != null)
             $this->DOWNLOAD_PATH = $path;
         if ($log_path != null)
             $this->LOG_PATH = $log_path;
         
-        echo $this->DOWNLOAD_PATH . $this->LOG_PATH;
-
         $this->phpFlickr = new tbPhpFlickr();
 
         //$this->log = KLogger::instance(dirname(__FILE__), KLogger::DEBUG);

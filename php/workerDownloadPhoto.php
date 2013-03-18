@@ -10,54 +10,102 @@
  *
  * @author tbilou
  */
-class workerDownloadPhoto extends FlickrService {
+
+require_once "aWorker.php";
+
+
+class workerDownloadPhoto extends aWorker {
 
     const TIMEOUT = 120; // Seconds
 
     public function __construct() {
+
         parent::__construct();
+        
+        $this->incTotalInstances(Keys::DOWNLOADS_INFO);
+
+        $this->log->logInfo("[workerDownloads] [" . getmypid() . "] - STARTED ");
+        $this->log->logInfo("[workerDownloads] [" . getmypid() . "] - Monitoring Queue " . Keys::DOWNLOADS_QUEUE);
+
+        while (1) {
+
+            // Check if this process should die
+            if ($this->redis->lPop(Keys::DOWNLOADS_KILL_QUEUE)) {
+                $this->decrTotalInstances(Keys::DOWNLOADS_INFO);
+                $this->log->logFatal("[workerDownloads] [" . getmypid() . "] - Got kill order...Bye Bye");
+                exit();
+            }
+            
+            try {
+                $job = $this->redis->blPop(Keys::DOWNLOADS_QUEUE, 10);
+            } catch (Exception $e) {
+                $this->log->logError("[workerDownloads] [" . getmypid() . "] - Error reading from queue " . Keys::DOWNLOADS_QUEUE);
+                continue;
+            }
+
+            if ($job) {
+                $this->setStartTime(Keys::DOWNLOADS_INFO);
+                // Start working
+                $json = $job[1];
+
+                $this->run(json_decode($json));
+            } else {
+                $this->log->logInfo("[workerDownloads] [" . getmypid() . "] - No messages found on queue " . Keys::DOWNLOADS_QUEUE . " ... Looping");
+            }
+        }
     }
 
     public function run($job) {
-        echo date(DATE_RFC822)." [workerDownloadPhoto] - Got message on queue TB.flickr.download.photo.REQ";
-        
+        $this->log->logNotice("[workerDownloads] [" . getmypid() . "] - Got message on queue " . Keys::DOWNLOADS_QUEUE);
+
         // Replace forbidden chars in windows filenames
         $job->photoset = preg_replace('/[\\/:\"*?<>|]/i', "_", $job->photoset);
 
-        $dir = Main::DOWNLOAD_PATH . trim($job->photoset) . DIRECTORY_SEPARATOR;
-        $path = Main::DOWNLOAD_PATH . trim($job->photoset) . DIRECTORY_SEPARATOR . $job->title . ".jpg";
+        $dir = $this->DOWNLOAD_PATH . trim($job->photoset) . DIRECTORY_SEPARATOR;
+        $path = $this->DOWNLOAD_PATH . trim($job->photoset) . DIRECTORY_SEPARATOR . $job->title . ".jpg";
 
         if (!file_exists($path)) {
+            $this->log->logInfo("[workerDownloads] [" . getmypid() . "] - No file found on the Disk. Checking if it's a duplicate");
+          
             // Check if file is already downloaded
-            $existingFile = $this->redis->get($job->id);
+            $existingFile = $this->redis->hget(Keys::DOWNLOADED_PHOTOS, $job->id);
+          
             if ($existingFile) {
-                echo date(DATE_RFC822)." [workerDownloadPhoto] - Duplicate Image - Creating Hardlink";
+                
+                $this->log->logNotice("[workerDownloads] [" . getmypid() . "] - Duplicate Image - Creating Hardlink");
+                
                 if (!link($existingFile, $path)) {
+                    $this->log->logError("[workerDownloads] [" . getmypid() . "] - Error creating hardlink. Make a simple copy");
                     // Error creating hardlink. Make a simple copy
                     if (!copy($existingFile, $path)) {
-                        echo date(DATE_RFC822)." [workerDownloadPhoto] - ERROR: Error copying file on filesystem";
+                        $this->log->logError("[workerDownloads] [" . getmypid() . "] - Error copying file on filesystem");
                     }
                 }
             } else {
                 // No file found on cache. Download it
+                $this->log->logInfo("[workerDownloads] [" . getmypid() . "] - No Duplicate found. Downloading it");
+                
                 if (!is_dir($dir)) {
                     mkdir($dir);
                 }
-                echo date(DATE_RFC822)." [workerDownloadPhoto] - Downloading file [".$path."]";
+                
+                $this->log->logNotice("[workerDownloads] [" . getmypid() . "] - Downloading file [" . $path . "]");
+                
                 if (!$this->downloadFile($job->url, $path)) {
                     // There was a timeout downloading the file
-                    echo date(DATE_RFC822)." [workerDownloadPhoto] - ERROR: Timeout downloading file. Pushing job to TB.flickr.download.failed.REQ";
-                    $this->redis->rPush("TB.flickr.download.failed.REQ", $job);
+                    $this->log->logError("[workerDownloads] [" . getmypid() . "] - Timeout downloading file. Pushing job to TB.flickr.download.failed");
+                    $this->redis->rPush("TB.flickr.download.failed", $job);
+
                     return;
                 }
 
-                $this->redis->set($job->id, $path);
+                $this->redis->hset(Keys::DOWNLOADED_PHOTOS, $job->id, $path);
             }
         } else {
             // The file already exists on the Filesystem. Keep a reference for future hardlinks
-            // TODO: Check the size of the file
-            if (!$this->redis->get($job->id)) {
-                $this->redis->put($job->id, $path);
+            // TODO: Check the size of the file. 0kb are not valid files...
+            if (!$this->redis->hget(Keys::DOWNLOADED_PHOTOS, $job->id)) {
+                $this->redis->hset(Keys::DOWNLOADED_PHOTOS, $job->id, $path);
             }
         }
     }
@@ -90,5 +138,7 @@ class workerDownloadPhoto extends FlickrService {
     }
 
 }
+
+$worker = new workerDownloadPhoto();
 
 ?>

@@ -2,6 +2,7 @@
 
 class Keys {
 
+    // The Queues for the messages
     const PHOTOSETS_GETLIST_QUEUE = "TB.Queue.flickr.photosets.getList";
     const PHOTOSETS_GETPHOTOS_QUEUE = "TB.Queue.flickr.photosets.getPhotos";
     const DOWNLOADS_QUEUE = "TB.Queue.flickr.download.photo";
@@ -15,6 +16,8 @@ class Keys {
     const PHOTOSETS_GETLIST_INFO = "TB.Hash.flickr.photosets.getList";
     const PHOTOSETS_GETPHOTOS_INFO = "TB.Hash.flickr.photosets.getPhotos";
     const DOWNLOADS_INFO = "TB.Hash.flickr.download.photo";
+    
+    const DOWNLOADED_PHOTOS = "TB.Hash.downloaded.photos";
 
     // Configuration
     const CONFIG_INFO = "TB.Hash.flickr.config";
