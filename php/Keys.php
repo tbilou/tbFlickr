@@ -18,6 +18,8 @@ class Keys {
     const DOWNLOADS_INFO = "TB.Hash.flickr.download.photo";
     
     const DOWNLOADED_PHOTOS = "TB.Hash.downloaded.photos";
+    
+    const REDIS_CACHE = "TB.Hash.Cache";
 
     // Configuration
     const CONFIG_INFO = "TB.Hash.flickr.config";

@@ -1,3 +1,6 @@
 [submodule "php/KLogger"]
 	path = php/KLogger
 	url = https://github.com/katzgrau/KLogger
+[submodule "php/tbPhpFlickr"]
+	path = php/tbPhpFlickr
+	url = https://github.com/tbilou/tbPhpFlickr.git

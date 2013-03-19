@@ -11,6 +11,8 @@
  * @author tbilou
  */
 require_once "tbPhpFlickr/tbPhpFlickr.php";
+require_once "tbPhpFlickr/cache/FileCache.php";
+require_once "tbPhpFlickr/cache/RedisCache.php";
 require_once "KLogger/src/KLogger.php";
 require_once "Keys.php";
 
@@ -41,7 +43,12 @@ class aWorker {
         if ($log_path != null)
             $this->LOG_PATH = $log_path;
         
-        $this->phpFlickr = new tbPhpFlickr();
+        //$cache = new FileCache();
+        $cache = new RedisCache();
+        //$cache->cache_dir = '/tmp/tbFlickr';
+        $cache->cache_expire = 60 * 1; // 30 minutes
+        
+        $this->phpFlickr = new tbPhpFlickr($cache);
 
         //$this->log = KLogger::instance(dirname(__FILE__), KLogger::DEBUG);
         $this->log = KLogger::instance($this->LOG_PATH, KLogger::DEBUG);
