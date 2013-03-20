@@ -18,6 +18,7 @@ class Keys {
     const DOWNLOADS_INFO = "TB.Hash.flickr.download.photo";
     
     const DOWNLOADED_PHOTOS = "TB.Hash.downloaded.photos";
+    const DOWNLOADED_PHOTOS_FAILED = "TB.flickr.download.failed";
     
     const REDIS_CACHE = "TB.Hash.Cache";
 

@@ -11,6 +11,7 @@
  * @author tbilou
  */
 require_once "tbPhpFlickr/tbPhpFlickr.php";
+require_once "tbPhpFlickr/cache/noCache.php";
 require_once "tbPhpFlickr/cache/FileCache.php";
 require_once "tbPhpFlickr/cache/RedisCache.php";
 require_once "KLogger/src/KLogger.php";
@@ -34,19 +35,22 @@ class aWorker {
         $this->redis = new Redis() or die("Can't load redis module.");
         $this->redis->connect($this->REDIS_HOST, $this->REDIS_PORT);
 
+        $cache = new noCache();
+        
         // Get the config
         $path = $this->redis->hget(Keys::CONFIG_INFO, "DOWNLOAD_PATH");
         $log_path = $this->redis->hget(Keys::CONFIG_INFO, "LOG_PATH");
+        $cache_class = $this->redis->hget(Keys::CONFIG_INFO, "CACHE_CLASS");
+        $cache_ttl = $this->redis->hget(Keys::CONFIG_INFO, "CACHE_TTL");
 
         if ($path != null)
             $this->DOWNLOAD_PATH = $path;
         if ($log_path != null)
             $this->LOG_PATH = $log_path;
-        
-        //$cache = new FileCache();
-        $cache = new RedisCache();
-        //$cache->cache_dir = '/tmp/tbFlickr';
-        $cache->cache_expire = 60 * 1; // 30 minutes
+        if ($cache_class != null)
+            $cache = new $cache_class;
+        if ($cache_ttl != null)
+            $cache->cache_expire = $cache_ttl;
         
         $this->phpFlickr = new tbPhpFlickr($cache);
 
