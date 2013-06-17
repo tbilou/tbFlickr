@@ -26,7 +26,10 @@ My first implementation was in 2011 using Tibco BW. It's a strange tool to imple
 
 Later in 2012, inspired by my implementation in Tibco BW and by [this post](http://www.justincarmony.com/blog/2012/01/10/php-workers-with-redis-solo/) I've implemented a multi-thread/worker solution based on [Redis](http://redis.io/) first in JAVA and later in PHP.
 
-I'm currently using the PHP version to backup my photos.
+I'm currently using the PHP version in my 8 year old powerbook to backup my photos.
+![splash](https://dl.dropboxusercontent.com/u/288561/tbFlickr/splash.jpg)
+![splash](https://dl.dropboxusercontent.com/u/288561/tbFlickr/options.jpg)
+![splash](https://dl.dropboxusercontent.com/u/288561/tbFlickr/status.jpg)
 
 ## Licence
 
